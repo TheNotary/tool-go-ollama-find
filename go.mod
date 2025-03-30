@@ -1,4 +1,4 @@
-module github.com/TheNotary/ollama-find
+module github.com/thenotary/tool-go-ollama-find
 
 go 1.21.1
 
@@ -10,3 +10,5 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+retract v0.1.0 // Published forgetting about module case-sensitivity

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/TheNotary/ollama-find/pkg/api"
+	"github.com/thenotary/tool-go-ollama-find/pkg/api"
 )
 
 type MockOllamaFind struct {
