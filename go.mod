@@ -1,6 +1,8 @@
 module github.com/thenotary/tool-go-ollama-find
 
-go 1.21.1
+go 1.23.0
+
+toolchain go1.23.7
 
 require github.com/stretchr/testify v1.10.0
 
