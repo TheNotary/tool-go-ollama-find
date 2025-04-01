@@ -13,7 +13,7 @@ const (
 	CleanModelDir = "~/.ollama/models"
 )
 
-var ModelDir, _ = filepath.Abs(CleanModelDir)
+var ModelDir, _ = ExpandPath(CleanModelDir)
 
 type Manifest struct {
 	Layers []struct {
