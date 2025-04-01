@@ -62,7 +62,7 @@ func LookupGGUFPath(modelURI, modelTag string, fh FileHelper) (string, error) {
 	pathToManifest := filepath.Join(ModelDir, "manifests", registryPath, modelName, modelTag)
 
 	if fh.FileMissing(pathToManifest) {
-		msg := fmt.Sprintf("error: Manifest for %s could not be found. Checked %s", modelName, CleanPath(pathToManifest))
+		msg := fmt.Sprintf("error: Manifest for %s could not be found. Checked %s", modelName, pathToManifest)
 		if LooksLikeTagNameNeeded(pathToManifest) {
 			if taggedFile, err := GetExampleTagName(pathToManifest); err == nil {
 				msg += fmt.Sprintf(".\n\nIf you meant to specify a version, try:\n  $  %s %s %s", CommandName(), modelURI, taggedFile)

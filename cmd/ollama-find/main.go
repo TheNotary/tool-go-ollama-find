@@ -26,19 +26,23 @@ func main() {
 
 	modelName, modelTag := ParseModelNameAndTag(arg1, arg2)
 
-	fmt.Println(api.LookupGGUF(modelName, modelTag))
+	gguf_path, err := api.LookupGGUF(modelName, modelTag)
+	if err != nil {
+		fmt.Println("error: something went wrong calling LookupGGUF")
+	}
+
+	fmt.Println(gguf_path)
 }
 
 func ParseModelNameAndTag(arg1 string, arg2 string) (string, string) {
-	// args := os.Args[1:]
 	modelName := strings.TrimSpace(arg1)
-	var modelTag string
+	modelTag := ""
 
 	if len(arg2) > 1 {
 		modelTag = strings.TrimSpace(arg2)
 	}
 
-	// Check if modelTag is specified in first argument via ':' symbol
+	// Handle case where modelTag is specified in first argument via ':' symbol
 	if strings.Contains(modelName, ":") {
 		parts := strings.SplitN(modelName, ":", 2)
 		modelName = parts[0]
