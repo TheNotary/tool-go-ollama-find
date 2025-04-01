@@ -13,7 +13,8 @@ const (
 	CleanModelDir = "~/.ollama/models"
 )
 
-var ModelDir, _ = ExpandPath(CleanModelDir)
+var fileHelper = &DefaultFileHelper{}
+var ModelDir, _ = fileHelper.ExpandPath(CleanModelDir)
 
 type Manifest struct {
 	Layers []struct {
@@ -29,10 +30,14 @@ type Manifest struct {
 // FileHelper defines an interface for file operations.
 type FileHelper interface {
 	FileMissing(path string) bool
+	DirExist(path string) bool
 	ReadManifest(path string) ([]byte, error)
+	IsWindows() bool
+	ExpandPath(path string) (string, error)
 }
 
-// DefaultFileHelper provides real implementations of file operations.
+// DefaultFileHelper provides implementations of file operations many of which
+// are handy to mock in tests.
 type DefaultFileHelper struct{}
 
 func (DefaultFileHelper) FileMissing(path string) bool {
@@ -40,8 +45,35 @@ func (DefaultFileHelper) FileMissing(path string) bool {
 	return os.IsNotExist(err)
 }
 
+func (DefaultFileHelper) DirExist(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
+}
+
 func (DefaultFileHelper) ReadManifest(path string) ([]byte, error) {
 	return os.ReadFile(filepath.Clean(path))
+}
+
+func (DefaultFileHelper) IsWindows() bool {
+	return os.PathSeparator == '\\' && os.PathListSeparator == ';'
+}
+
+func (DefaultFileHelper) ExpandPath(path string) (string, error) {
+	if strings.HasPrefix(path, "~") {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		path = filepath.Join(homeDir, path[1:])
+	}
+
+	// Convert to absolute path
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+
+	return absPath, nil
 }
 
 ////////////////
@@ -63,7 +95,7 @@ func LookupGGUFPath(modelURI, modelTag string, fh FileHelper) (string, error) {
 
 	if fh.FileMissing(pathToManifest) {
 		msg := fmt.Sprintf("error: Manifest for %s could not be found. Checked %s", modelName, pathToManifest)
-		if LooksLikeTagNameNeeded(pathToManifest) {
+		if SupplyingATagNameFixesIt(fh, pathToManifest) {
 			if taggedFile, err := GetExampleTagName(pathToManifest); err == nil {
 				msg += fmt.Sprintf(".\n\nIf you meant to specify a version, try:\n  $  %s %s %s", CommandName(), modelURI, taggedFile)
 			}
@@ -86,8 +118,8 @@ func LookupGGUFPath(modelURI, modelTag string, fh FileHelper) (string, error) {
 		return "", fmt.Errorf("error: Unable to extract digest from manifest at %s for model %s", pathToManifest, modelName)
 	}
 
-	if isWindows() {
-		absolute_path, err := ExpandPath(filepath.Join(CleanModelDir, "blobs", digest))
+	if fh.IsWindows() {
+		absolute_path, err := fh.ExpandPath(filepath.Join(CleanModelDir, "blobs", digest))
 		if err != nil {
 			fmt.Println("error: Unable to ExpandPath")
 		}
@@ -110,16 +142,8 @@ func GetExampleTagName(path string) (string, error) {
 	return files[0].Name(), nil
 }
 
-func LooksLikeTagNameNeeded(path string) bool {
-	return DirExists(filepath.Dir(path))
-}
-
-func CleanPath(absolutePath string) string {
-	if isWindows() {
-		return absolutePath
-	}
-
-	return strings.Replace(absolutePath, ModelDir, CleanModelDir, 1)
+func SupplyingATagNameFixesIt(fh FileHelper, path string) bool {
+	return fh.DirExist(filepath.Dir(path))
 }
 
 func ExtractModelDigest(manifest Manifest) (string, error) {
@@ -148,24 +172,6 @@ func GetPrivateRegistryModelNameAndRegistry(modelName string) (string, string) {
 	modelName = parts[len(parts)-1]
 	registryPath := strings.Join(parts[:len(parts)-1], "/")
 	return registryPath, modelName
-}
-
-func ReadManifest(pathToManifest string) ([]byte, error) {
-	return os.ReadFile(filepath.Clean(pathToManifest))
-}
-
-func FileMissing(path string) bool {
-	_, err := os.Stat(path)
-	return os.IsNotExist(err)
-}
-
-func DirExists(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && info.IsDir()
-}
-
-func isWindows() bool {
-	return os.PathSeparator == '\\' && os.PathListSeparator == ';'
 }
 
 func ExpandPath(path string) (string, error) {

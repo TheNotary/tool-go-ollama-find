@@ -11,6 +11,10 @@ import (
 	"github.com/thenotary/tool-go-ollama-find/pkg/api"
 )
 
+///////////
+// Mocks //
+///////////
+
 type MockOllamaFind struct {
 	mock.Mock
 }
@@ -20,13 +24,34 @@ func (m *MockOllamaFind) FileMissing(path string) bool {
 	return args.Bool(0)
 }
 
+func (m *MockOllamaFind) DirExist(path string) bool {
+	args := m.Called(path)
+	return args.Bool(0)
+}
+
 func (m *MockOllamaFind) ReadManifest(path string) ([]byte, error) {
 	args := m.Called(path)
 	return args.Get(0).([]byte), args.Error(1)
 }
 
+func (m *MockOllamaFind) IsWindows() bool {
+	return false
+}
+
+func (m *MockOllamaFind) ExpandPath(path string) (string, error) {
+	return "hi", nil
+}
+
+//////////
+// Vars //
+//////////
+
 var testManifestPath = "./testdata/ollama_manifest.json"
 var manifestData, _ = os.ReadFile(filepath.Clean(testManifestPath))
+
+///////////
+// Tests //
+///////////
 
 func TestLookupGGUFPath(t *testing.T) {
 	assert := assert.New(t)
@@ -60,6 +85,7 @@ func TestLookupGGUFPathUgly(t *testing.T) {
 			mockFind := new(MockOllamaFind)
 			mockFind.On("FileMissing", mock.Anything).Return(tc.fileMissingValue)
 			mockFind.On("ReadManifest", mock.Anything).Return(manifestData, nil)
+			mockFind.On("DirExist", mock.Anything).Return(true)
 
 			_, err := api.LookupGGUFPath(tc.modelURI, tc.modelTag, mockFind)
 
@@ -106,14 +132,20 @@ func TestExtractModelDigest(t *testing.T) {
 	}
 }
 
+/////////////////////
+// Test FileHelper //
+/////////////////////
+
 func TestFileMissing(t *testing.T) {
-	if api.FileMissing(filepath.Join("/nonexistent", "file")) != true {
+	fh := &api.DefaultFileHelper{}
+	if fh.FileMissing(filepath.Join("/nonexistent", "file")) != true {
 		t.Error("expected file to be missing")
 	}
 }
 
 func TestExpandPath(t *testing.T) {
-	expandedPath, _ := api.ExpandPath("~/blah")
+	fh := &api.DefaultFileHelper{}
+	expandedPath, _ := fh.ExpandPath("~/blah")
 	if len(expandedPath) <= 6 {
 		t.Error("expected ExpandPath make the test string longer")
 	}

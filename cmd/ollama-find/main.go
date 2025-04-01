@@ -10,12 +10,30 @@ import (
 
 func main() {
 	args := os.Args[1:]
+	var handled bool
 
-	if len(args) == 0 || args[0] == "help" || args[0] == "--help" || args[0] == "-h" {
-		fmt.Println(Help())
+	handled = HandleHelpCommand(args)
+	if handled {
 		return
 	}
 
+	handled = HandleFindCommand(args)
+	if handled {
+		return
+	}
+
+	fmt.Println("error: unable to handle operation.")
+}
+
+func HandleHelpCommand(args []string) bool {
+	if len(args) == 0 || args[0] == "help" || args[0] == "--help" || args[0] == "-h" {
+		fmt.Println(Help())
+		return true
+	}
+	return false
+}
+
+func HandleFindCommand(args []string) bool {
 	var arg1, arg2 string
 	if len(args) > 0 {
 		arg1 = args[0]
@@ -28,10 +46,12 @@ func main() {
 
 	gguf_path, err := api.LookupGGUF(modelName, modelTag)
 	if err != nil {
-		fmt.Println("error: something went wrong calling LookupGGUF")
+		fmt.Println("error: something went wrong calling LookupGGUF", err)
+		return false
 	}
 
 	fmt.Println(gguf_path)
+	return true
 }
 
 func ParseModelNameAndTag(arg1 string, arg2 string) (string, string) {
