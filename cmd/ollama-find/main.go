@@ -34,15 +34,7 @@ func HandleHelpCommand(args []string) bool {
 }
 
 func HandleFindCommand(args []string) bool {
-	var arg1, arg2 string
-	if len(args) > 0 {
-		arg1 = args[0]
-	}
-	if len(args) > 1 {
-		arg2 = args[1]
-	}
-
-	modelName, modelTag := ParseModelNameAndTag(arg1, arg2)
+	modelName, modelTag := ParseModelNameAndTag(args)
 
 	gguf_path, err := api.LookupGGUF(modelName, modelTag)
 	if err != nil {
@@ -54,12 +46,9 @@ func HandleFindCommand(args []string) bool {
 	return true
 }
 
-func ParseModelNameAndTag(arg1 string, arg2 string) (string, string) {
-	modelName := strings.TrimSpace(arg1)
-	modelTag := ""
-
-	if len(arg2) > 1 {
-		modelTag = strings.TrimSpace(arg2)
+func ParseModelNameAndTag(args []string) (modelName, modelTag string) {
+	if len(args) > 0 {
+		modelName = strings.TrimSpace(args[0])
 	}
 
 	// Handle case where modelTag is specified in first argument via ':' symbol
@@ -67,14 +56,18 @@ func ParseModelNameAndTag(arg1 string, arg2 string) (string, string) {
 		parts := strings.SplitN(modelName, ":", 2)
 		modelName = parts[0]
 		modelTag = parts[1]
+		return
 	}
 
-	// If no modelTag, default to "latest"
-	if modelTag == "" {
-		modelTag = "latest"
+	// Handle case where modelTag is specified in second argument
+	if len(args) > 1 && strings.TrimSpace(args[1]) != "" {
+		modelTag = strings.TrimSpace(args[1])
+		return
 	}
 
-	return modelName, modelTag
+	// Handle case where modelTag is ommited, defaulting to "latest"
+	modelTag = "latest"
+	return
 }
 
 func Help() string {
