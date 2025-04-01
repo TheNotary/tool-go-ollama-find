@@ -111,3 +111,10 @@ func TestFileMissing(t *testing.T) {
 		t.Error("expected file to be missing")
 	}
 }
+
+func TestExpandPath(t *testing.T) {
+	expandedPath, _ := api.ExpandPath("~/blah")
+	if len(expandedPath) <= 6 {
+		t.Error("expected ExpandPath make the test string longer")
+	}
+}

@@ -86,6 +86,14 @@ func LookupGGUFPath(modelURI, modelTag string, fh FileHelper) (string, error) {
 		return "", fmt.Errorf("error: Unable to extract digest from manifest at %s for model %s", pathToManifest, modelName)
 	}
 
+	if isWindows() {
+		absolute_path, err := ExpandPath(filepath.Join(CleanModelDir, "blobs", digest))
+		if err != nil {
+			fmt.Println("error: Unable to ExpandPath")
+		}
+		return absolute_path, nil
+	}
+
 	return filepath.Join(CleanModelDir, "blobs", digest), nil
 }
 
@@ -107,6 +115,10 @@ func LooksLikeTagNameNeeded(path string) bool {
 }
 
 func CleanPath(absolutePath string) string {
+	if isWindows() {
+		return absolutePath
+	}
+
 	return strings.Replace(absolutePath, ModelDir, CleanModelDir, 1)
 }
 
@@ -150,4 +162,26 @@ func FileMissing(path string) bool {
 func DirExists(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && info.IsDir()
+}
+
+func isWindows() bool {
+	return os.PathSeparator == '\\' && os.PathListSeparator == ';'
+}
+
+func ExpandPath(path string) (string, error) {
+	if strings.HasPrefix(path, "~") {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		path = filepath.Join(homeDir, path[1:])
+	}
+
+	// Convert to absolute path
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+
+	return absPath, nil
 }
