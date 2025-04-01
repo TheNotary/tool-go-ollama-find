@@ -2,7 +2,6 @@ package api_test
 
 import (
 	"os"
-	"os/user"
 	"path/filepath"
 	"testing"
 
@@ -48,12 +47,11 @@ func (m *MockOllamaFind) ExpandPath(path string) (string, error) {
 // Vars //
 //////////
 
-var u, _ = user.Current()
-var userName = u.Name
+var homeDir, _ = os.UserHomeDir()
 
 var testManifestPath = "./testdata/ollama_manifest.json"
 var manifestData, _ = os.ReadFile(filepath.Clean(testManifestPath))
-var expectedWindowsBlobPath = filepath.Join("/Users", userName, ".ollama", "models", "blobs",
+var expectedWindowsBlobPath = filepath.Join(homeDir, ".ollama", "models", "blobs",
 	"sha256-96c415656d377afbff962f6cdb2394ab092ccbcbaab4b82525bc4ca800fe8a49")
 var expectedNormalBlobPath = filepath.Join("~", ".ollama", "models", "blobs",
 	"sha256-96c415656d377afbff962f6cdb2394ab092ccbcbaab4b82525bc4ca800fe8a49")
