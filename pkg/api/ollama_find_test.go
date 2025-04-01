@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"os"
+	"os/user"
 	"path/filepath"
 	"testing"
 
@@ -35,19 +36,27 @@ func (m *MockOllamaFind) ReadManifest(path string) ([]byte, error) {
 }
 
 func (m *MockOllamaFind) IsWindows() bool {
-	return false
+	args := m.Called()
+	return args.Bool(0)
 }
 
 func (m *MockOllamaFind) ExpandPath(path string) (string, error) {
-	return "hi", nil
+	return api.DefaultFileHelper{}.ExpandPath(path)
 }
 
 //////////
 // Vars //
 //////////
 
+var u, _ = user.Current()
+var userName = u.Name
+
 var testManifestPath = "./testdata/ollama_manifest.json"
 var manifestData, _ = os.ReadFile(filepath.Clean(testManifestPath))
+var expectedWindowsBlobPath = filepath.Join("/Users", userName, ".ollama", "models", "blobs",
+	"sha256-96c415656d377afbff962f6cdb2394ab092ccbcbaab4b82525bc4ca800fe8a49")
+var expectedNormalBlobPath = filepath.Join("~", ".ollama", "models", "blobs",
+	"sha256-96c415656d377afbff962f6cdb2394ab092ccbcbaab4b82525bc4ca800fe8a49")
 
 ///////////
 // Tests //
@@ -59,12 +68,30 @@ func TestLookupGGUFPath(t *testing.T) {
 	modelName := "deepseek-r1"
 
 	mockFind := new(MockOllamaFind)
+	mockFind.On("IsWindows", mock.Anything).Return(false)
 	mockFind.On("FileMissing", mock.Anything).Return(false)
 	mockFind.On("ReadManifest", mock.Anything).Return(manifestData, nil)
 
 	path, err := api.LookupGGUFPath(modelName, "", mockFind)
+
 	assert.NoError(err)
-	assert.Equal("~/.ollama/models/blobs/sha256-96c415656d377afbff962f6cdb2394ab092ccbcbaab4b82525bc4ca800fe8a49", path)
+	assert.Equal(expectedNormalBlobPath, path)
+}
+
+func TestOutputsForWindows(t *testing.T) {
+	assert := assert.New(t)
+
+	modelName := "deepseek-r1"
+
+	mockFind := new(MockOllamaFind)
+	mockFind.On("IsWindows", mock.Anything).Return(true)
+	mockFind.On("FileMissing", mock.Anything).Return(false)
+	mockFind.On("ReadManifest", mock.Anything).Return(manifestData, nil)
+
+	path, err := api.LookupGGUFPath(modelName, "", mockFind)
+
+	assert.NoError(err)
+	assert.Equal(expectedWindowsBlobPath, path)
 }
 
 func TestLookupGGUFPathUgly(t *testing.T) {
@@ -83,6 +110,7 @@ func TestLookupGGUFPathUgly(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockFind := new(MockOllamaFind)
+			mockFind.On("IsWindows", mock.Anything).Return(false)
 			mockFind.On("FileMissing", mock.Anything).Return(tc.fileMissingValue)
 			mockFind.On("ReadManifest", mock.Anything).Return(manifestData, nil)
 			mockFind.On("DirExist", mock.Anything).Return(true)
