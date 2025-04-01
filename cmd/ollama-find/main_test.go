@@ -4,6 +4,11 @@ import (
 	"testing"
 )
 
+// TODO: finish the test cases up
+// func TestHandleFindCommand(t *testing.T) {
+
+// }
+
 func TestParseModelNameAndTag(t *testing.T) {
 	tests := []struct {
 		name      string

@@ -16,6 +16,7 @@ This is a CLI tool that allows you to quickly generate a path to a gguf file tha
 
 ## Run Tests
 
+    go install github.com/mfridman/tparse@latest
     alias gotest="set -o pipefail && go test ./... -json | tparse -all"
     gotest
 

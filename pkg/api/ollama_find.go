@@ -10,12 +10,17 @@ import (
 )
 
 const (
+	// On mac and linux, to ensure program outputs don't contain sensitive
+	// information, the absolute paths to files will be truncated with this
+	// prefix
 	CleanModelDir = "~/.ollama/models"
 )
 
 var fileHelper = &DefaultFileHelper{}
 var ModelDir, _ = fileHelper.ExpandPath(CleanModelDir)
 
+// A Manifest allows us to unmarshall the important parts of Ollama's manifest
+// json
 type Manifest struct {
 	Layers []struct {
 		MediaType string `json:"mediaType"`
@@ -40,6 +45,7 @@ type FileHelper interface {
 // are handy to mock in tests.
 type DefaultFileHelper struct{}
 
+// Returns true if the path supplied does not exist
 func (DefaultFileHelper) FileMissing(path string) bool {
 	_, err := os.Stat(path)
 	return os.IsNotExist(err)
@@ -58,6 +64,8 @@ func (DefaultFileHelper) IsWindows() bool {
 	return os.PathSeparator == '\\' && os.PathListSeparator == ';'
 }
 
+// Replaces the leading "~" in a string with the users HOME path (even on window)
+// as well as calls filepath.Abs on the path supplied
 func (DefaultFileHelper) ExpandPath(path string) (string, error) {
 	if strings.HasPrefix(path, "~") {
 		homeDir, err := os.UserHomeDir()
