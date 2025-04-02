@@ -1,16 +1,8 @@
 /*
-Testing root level godoc.
+The CLI tool ollama-find will print the path of a gguf cached by ollama given the model and tag provided.
 
-# How to Create an Index
+Usage:
 
-Markdown is used to describe headers in your documentation.
-
-# Handling the Case that you have few things to Index
-
-Each header will be listed in your index.
-
-# Appendix
-
-TODO: Create a valuable appendix for this document.
+	ollama-find llama3 [tag]
 */
-package ollama_find
+package main
