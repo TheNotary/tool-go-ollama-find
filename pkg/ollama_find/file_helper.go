@@ -14,6 +14,7 @@ import (
 type FileHelper interface {
 	FileMissing(path string) bool
 	DirExist(path string) bool
+	ReadDir(path string) ([]os.DirEntry, error)
 	ReadManifest(path string) ([]byte, error)
 	IsWindows() bool
 	ExpandPath(path string) (string, error)
@@ -32,6 +33,10 @@ func (defaultFileHelper) FileMissing(path string) bool {
 func (defaultFileHelper) DirExist(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && info.IsDir()
+}
+
+func (defaultFileHelper) ReadDir(path string) ([]os.DirEntry, error) {
+	return os.ReadDir(path)
 }
 
 func (defaultFileHelper) ReadManifest(path string) ([]byte, error) {

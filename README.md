@@ -1,6 +1,6 @@
 # OllamaFind
 [![Go Reference](https://pkg.go.dev/badge/github.com/thenotary/tool-go-ollama-find.svg)](https://pkg.go.dev/github.com/thenotary/tool-go-ollama-find)
-![Tests](https://github.com/thenotary/tool-go-ollama-find/actions/workflows/build.yml/badge.svg)
+[![Tests](https://github.com/thenotary/tool-go-ollama-find/actions/workflows/build.yml/badge.svg)](https://github.com/thenotary/tool-go-ollama-find/actions/workflows/build.yml)
 
 This is a CLI tool that allows you to quickly generate a path to a gguf file that's been pulled via Ollama.
 

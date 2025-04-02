@@ -1,6 +1,7 @@
 package ollama_find
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -41,6 +42,13 @@ func (m *MockOllamaFind) ExpandPath(path string) (string, error) {
 	return defaultFileHelper{}.ExpandPath(path)
 }
 
+func (m *MockOllamaFind) ReadDir(path string) ([]os.DirEntry, error) {
+	if path == "/empty" {
+		return []os.DirEntry{}, nil
+	}
+	return os.ReadDir(".")
+}
+
 //////////
 // Vars //
 //////////
@@ -57,6 +65,15 @@ var expectedNormalBlobPath = filepath.Join("~", ".ollama", "models", "blobs",
 ///////////
 // Tests //
 ///////////
+
+func TestLookupGGUF(t *testing.T) {
+	assert := assert.New(t)
+
+	output, err := LookupGGUF("missing-model", "latest")
+
+	assert.Contains(err.Error(), "error: Manifest for")
+	assert.Equal("", output)
+}
 
 func TestLookupGGUFPath(t *testing.T) {
 	assert := assert.New(t)
@@ -92,32 +109,79 @@ func TestOutputsForWindows(t *testing.T) {
 
 func TestLookupGGUFPathUgly(t *testing.T) {
 	cases := []struct {
-		name             string
-		modelURI         string
-		modelTag         string
-		fileMissingValue bool
-		expectErr        bool
+		name     string
+		modelURI string
+		modelTag string
+
+		fileMissing    bool
+		unreadableFile bool
+		unparsableFile bool
+		unusableFile   bool
+
+		expectErr bool
 	}{
-		{"Valid model with tag", "mymodel", "v1.0", false, false},
-		{"Valid model without tag", "mymodel", "", false, false},
-		{"Invalid model", "unknownmodel", "", true, true},
+		{"Valid model with tag", "mymodel", "v1.0",
+			false, false, false, false,
+			false},
+		{"Valid model without tag", "mymodel", "",
+			false, false, false, false,
+			false},
+
+		{"fileMissing for model's manifest", "unknownmodel", "",
+			true, false, false, false,
+			true},
+		{"Unreadable manifest", "mymodel", "",
+			false, true, false, false,
+			true},
+		{"unparsableFile", "mymodel", "",
+			false, false, true, false,
+			true},
+		{"manifest missing keys", "mymodel", "",
+			false, false, false, true,
+			true},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
 			mockFind := new(MockOllamaFind)
 			mockFind.On("IsWindows", mock.Anything).Return(false)
-			mockFind.On("FileMissing", mock.Anything).Return(tc.fileMissingValue)
-			mockFind.On("ReadManifest", mock.Anything).Return(manifestData, nil)
+			mockFind.On("FileMissing", mock.Anything).Return(tt.fileMissing)
+
+			if tt.unreadableFile {
+				mockFind.On("ReadManifest", mock.Anything).Return([]byte{}, errors.New("error"))
+			} else {
+				if tt.unparsableFile {
+					mockFind.On("ReadManifest", mock.Anything).Return([]byte("..."), nil)
+				} else if tt.unusableFile {
+					mockFind.On("ReadManifest", mock.Anything).Return([]byte("{}"), nil)
+				} else {
+					mockFind.On("ReadManifest", mock.Anything).Return(manifestData, nil)
+				}
+			}
+
 			mockFind.On("DirExist", mock.Anything).Return(true)
 
-			_, err := LookupGGUFPath(tc.modelURI, tc.modelTag, mockFind)
+			_, err := LookupGGUFPath(tt.modelURI, tt.modelTag, mockFind)
 
-			if (err != nil) != tc.expectErr {
-				t.Errorf("expected error: %v, got: %v", tc.expectErr, err)
+			if (err != nil) != tt.expectErr {
+				t.Errorf("expected error: %v, got: %v", tt.expectErr, err)
 			}
 		})
 	}
+}
+
+func TestCommandName(t *testing.T) {
+	name := commandName()
+	assert.IsType(t, name, "")
+}
+
+func TestGetExampleTagName(t *testing.T) {
+	fh := new(MockOllamaFind)
+
+	suggestion, err := getTagNameSuggestion(fh, "/empty/.keep")
+
+	assert.Empty(t, suggestion)
+	assert.NoError(t, err)
 }
 
 func TestSplitRegistryFromModelName(t *testing.T) {
