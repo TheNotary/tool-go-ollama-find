@@ -33,7 +33,7 @@ type Manifest struct {
 ////////////////
 
 // wrapper for LookupGGUFPath
-func LookupGGUF(modelURI, modelTag string) (string, error) {
+var LookupGGUF = func(modelURI, modelTag string) (string, error) {
 	return LookupGGUFPath(modelURI, modelTag, &DefaultFileHelper{})
 }
 

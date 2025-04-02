@@ -25,14 +25,27 @@ func main() {
 	fmt.Println("error: unable to handle operation.")
 }
 
+// HandleHelpCommand peaks at the args and if appropriate will print the help
+// message for the CLI tool.
+// Returns true to indicate the CLI operation was handled or false if not.
 func HandleHelpCommand(args []string) bool {
-	if len(args) == 0 || args[0] == "help" || args[0] == "--help" || args[0] == "-h" {
+	helpCommands := map[string]bool{
+		"help":   true,
+		"halp":   true,
+		"--help": true,
+		"-h":     true,
+	}
+
+	if len(args) == 0 || helpCommands[args[0]] {
 		fmt.Println(Help())
 		return true
 	}
 	return false
 }
 
+// HandleFindCommand peaks at the args and if appropriate will perform the
+// FindCommand CLI operation.
+// Returns true to indicate the CLI operation was handled or false if not.
 func HandleFindCommand(args []string) bool {
 	modelName, modelTag := ParseModelNameAndTag(args)
 
@@ -46,6 +59,8 @@ func HandleFindCommand(args []string) bool {
 	return true
 }
 
+// ParseModelNameAndTag peaks at the args and returns the modelName and
+// modelTag that the user requested to find.
 func ParseModelNameAndTag(args []string) (modelName, modelTag string) {
 	if len(args) > 0 {
 		modelName = strings.TrimSpace(args[0])
