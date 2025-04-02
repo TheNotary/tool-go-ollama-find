@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/thenotary/tool-go-ollama-find/pkg/api"
+	"github.com/thenotary/tool-go-ollama-find/pkg/ollama_find"
 )
 
 func main() {
@@ -36,7 +36,7 @@ func HandleHelpCommand(args []string) bool {
 func HandleFindCommand(args []string) bool {
 	modelName, modelTag := ParseModelNameAndTag(args)
 
-	gguf_path, err := api.LookupGGUF(modelName, modelTag)
+	gguf_path, err := ollama_find.LookupGGUF(modelName, modelTag)
 	if err != nil {
 		fmt.Println("error: something went wrong calling LookupGGUF", err)
 		return false

@@ -6,7 +6,7 @@ This is a CLI tool that allows you to quickly generate a path to a gguf file tha
 
 ## Install From Github
 
-    go install github.com/thenotary/tool-go-ollama-find/cmd/ollama-find@v0.1.3
+    go install github.com/thenotary/tool-go-ollama-find/cmd/ollama-find@latest
 
 ## Build/ Run from Source
 

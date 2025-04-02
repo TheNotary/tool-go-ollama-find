@@ -13,4 +13,4 @@ Each header will be listed in your index.
 
 TODO: Create a valuable appendix for this document.
 */
-package toolgoollamafind
+package ollama_find

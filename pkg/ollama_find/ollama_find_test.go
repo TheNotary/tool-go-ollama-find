@@ -1,4 +1,4 @@
-package api_test
+package ollama_find_test
 
 import (
 	"os"
@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/thenotary/tool-go-ollama-find/pkg/api"
+	"github.com/thenotary/tool-go-ollama-find/pkg/ollama_find"
 )
 
 ///////////
@@ -40,7 +40,7 @@ func (m *MockOllamaFind) IsWindows() bool {
 }
 
 func (m *MockOllamaFind) ExpandPath(path string) (string, error) {
-	return api.DefaultFileHelper{}.ExpandPath(path)
+	return ollama_find.DefaultFileHelper{}.ExpandPath(path)
 }
 
 //////////
@@ -70,7 +70,7 @@ func TestLookupGGUFPath(t *testing.T) {
 	mockFind.On("FileMissing", mock.Anything).Return(false)
 	mockFind.On("ReadManifest", mock.Anything).Return(manifestData, nil)
 
-	path, err := api.LookupGGUFPath(modelName, "", mockFind)
+	path, err := ollama_find.LookupGGUFPath(modelName, "", mockFind)
 
 	assert.NoError(err)
 	assert.Equal(expectedNormalBlobPath, path)
@@ -86,7 +86,7 @@ func TestOutputsForWindows(t *testing.T) {
 	mockFind.On("FileMissing", mock.Anything).Return(false)
 	mockFind.On("ReadManifest", mock.Anything).Return(manifestData, nil)
 
-	path, err := api.LookupGGUFPath(modelName, "", mockFind)
+	path, err := ollama_find.LookupGGUFPath(modelName, "", mockFind)
 
 	assert.NoError(err)
 	assert.Equal(expectedWindowsBlobPath, path)
@@ -113,7 +113,7 @@ func TestLookupGGUFPathUgly(t *testing.T) {
 			mockFind.On("ReadManifest", mock.Anything).Return(manifestData, nil)
 			mockFind.On("DirExist", mock.Anything).Return(true)
 
-			_, err := api.LookupGGUFPath(tc.modelURI, tc.modelTag, mockFind)
+			_, err := ollama_find.LookupGGUFPath(tc.modelURI, tc.modelTag, mockFind)
 
 			if (err != nil) != tc.expectErr {
 				t.Errorf("expected error: %v, got: %v", tc.expectErr, err)
@@ -135,7 +135,7 @@ func TestSplitRegistryFromModelName(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.input, func(t *testing.T) {
-			reg, model := api.SplitRegistryFromModelName(tc.input)
+			reg, model := ollama_find.SplitRegistryFromModelName(tc.input)
 			if reg != tc.expRegistry || model != tc.expModel {
 				t.Errorf("expected (%s, %s), got (%s, %s)", tc.expRegistry, tc.expModel, reg, model)
 			}
@@ -144,7 +144,7 @@ func TestSplitRegistryFromModelName(t *testing.T) {
 }
 
 func TestExtractModelDigest(t *testing.T) {
-	manifest := api.Manifest{
+	manifest := ollama_find.Manifest{
 		Layers: []struct {
 			MediaType string `json:"mediaType"`
 			Digest    string `json:"digest"`
@@ -152,7 +152,7 @@ func TestExtractModelDigest(t *testing.T) {
 			{MediaType: "application/vnd.ollama.image.model", Digest: "sha256:abc123"},
 		},
 	}
-	digest, err := api.ExtractModelDigest(manifest)
+	digest, err := ollama_find.ExtractModelDigest(manifest)
 	if err != nil || digest != "sha256-abc123" {
 		t.Errorf("expected sha256-abc123, got %s, err: %v", digest, err)
 	}
@@ -163,14 +163,14 @@ func TestExtractModelDigest(t *testing.T) {
 /////////////////////
 
 func TestFileMissing(t *testing.T) {
-	fh := &api.DefaultFileHelper{}
+	fh := &ollama_find.DefaultFileHelper{}
 	if fh.FileMissing(filepath.Join("/nonexistent", "file")) != true {
 		t.Error("expected file to be missing")
 	}
 }
 
 func TestExpandPath(t *testing.T) {
-	fh := &api.DefaultFileHelper{}
+	fh := &ollama_find.DefaultFileHelper{}
 	expandedPath, _ := fh.ExpandPath("~/blah")
 	if len(expandedPath) <= 6 {
 		t.Error("expected ExpandPath make the test string longer")
