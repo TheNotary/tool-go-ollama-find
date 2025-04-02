@@ -43,7 +43,7 @@ func (m *MockOllamaFind) ExpandPath(path string) (string, error) {
 }
 
 func (m *MockOllamaFind) ReadDir(path string) ([]os.DirEntry, error) {
-	if path == "/empty" {
+	if path == filepath.Join("/", "empty") {
 		return []os.DirEntry{}, nil
 	}
 	return os.ReadDir(".")
@@ -175,10 +175,10 @@ func TestCommandName(t *testing.T) {
 	assert.IsType(t, name, "")
 }
 
-func TestGetExampleTagName(t *testing.T) {
+func TestGetTagNameSuggestion(t *testing.T) {
 	fh := new(MockOllamaFind)
 
-	suggestion, err := getTagNameSuggestion(fh, "/empty/.keep")
+	suggestion, err := getTagNameSuggestion(fh, filepath.Join("/empty", ".keep"))
 
 	assert.Empty(t, suggestion)
 	assert.NoError(t, err)

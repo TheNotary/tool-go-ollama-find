@@ -61,7 +61,7 @@ func TestReadDir(t *testing.T) {
 
 func TestDirExist(t *testing.T) {
 	fh := &defaultFileHelper{}
-	doesTmpExist := fh.DirExist("/tmp")
+	doesTmpExist := fh.DirExist(".")
 	assert.True(t, doesTmpExist)
 }
 
